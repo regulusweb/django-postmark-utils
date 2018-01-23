@@ -116,6 +116,51 @@ class Message(models.Model):
         verbose_name_plural = _("messages")
         ordering = ['-date']
 
+    def update_delivery_status(self):
+        """
+        Updates the message delivery status upon a bounce or delivery.
+
+        TODO: - do email addresses appearing in multiple recepient fields (or
+                even multiple times in the same field) get delivered to the
+                addresses multiple times?
+              - do bounce and delivery email addresses have names in them, if
+                they were specified that way when sending, or do they get
+                changed in any way from what was in the sending header?
+        """
+
+        delivery_status = self.delivery_status
+
+        to_emails = [email.strip() for email in self.to_emails.split(',')]
+        cc_emails = [email.strip() for email in self.cc_emails.split(',')]
+        if (len(cc_emails) == 1) and (cc_emails[0] == ''):
+            cc_emails = []
+        bcc_emails = [email.strip() for email in self.bcc_emails.split(',')]
+        if (len(bcc_emails) == 1) and (bcc_emails[0] == ''):
+            bcc_emails = []
+        # TODO: find out if Postmark delivers (and sends webhooks for) multiple
+        #       messages to email addresses specified multiple times, and if
+        #       not, use "set()" here
+        recipients = to_emails + cc_emails + bcc_emails
+        bounces = self.bounces.all()
+        deliveries = self.deliveries.all()
+        if bounces and not deliveries:
+            delivery_status = Message.DELIVERY_STATUS_OPTIONS['BOUNCED']
+        elif deliveries:
+            if (len(deliveries) == len(recipients)):
+                delivery_status = Message.DELIVERY_STATUS_OPTIONS['DELIVERED']
+            else:
+                # TODO: use single query instead of loop?
+                for recipient in recipients:
+                    recipient_bounces = bounces.filter(email=recipient)
+                    recipient_deliveries = deliveries.filter(email=recipient)
+                    if recipient_bounces and not recepient_deliveries:
+                        delivery_status = Message.DELIVERY_STATUS_OPTIONS['BOUNCED']
+                        break
+
+        if delivery_status is not self.delivery_status:
+            self.delivery_status = delivery_status
+            self.save()
+
 
 class Bounce(models.Model):
     """
