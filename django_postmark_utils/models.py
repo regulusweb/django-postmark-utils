@@ -5,11 +5,6 @@ from django.utils.translation import ugettext_lazy as _
 class Message(models.Model):
     """
     Email message data.
-
-    TODO: when resending:
-          - use "To" header field
-          - do not add "Cc" and "Bcc" header fields, as these might already
-            have been delivered, and if not, will be handled individually
     """
 
     DELIVERY_STATUS_OPTIONS = {
@@ -19,19 +14,9 @@ class Message(models.Model):
         'DELIVERED'   : 3,
     }
 
-    content_type = models.CharField(
-        _("Content type"),
-        max_length=255,
-        help_text=_("The content type of the message")
-    )
-    encoding = models.CharField(
-        _("Encoding"),
-        max_length=255,
-        help_text=_("The encoding of the message")
-    )
-    raw_header = models.TextField(
-        _("Raw header"),
-        help_text=_("The raw message header, in JSON format")
+    pickled_obj = models.BinaryField(
+        _("Pickled object"),
+        help_text=_("Pickled message object")
     )
     message_id = models.CharField(
         _("Message ID"),
@@ -72,12 +57,6 @@ class Message(models.Model):
         blank=True,
         help_text=_("The 'Bcc' field of the message, with email addresses "
                     "separated by commas")
-    )
-    body = models.TextField(
-        _("Body"),
-        blank=True,
-        help_text=_("Plain text for text messages, and JSON (including "
-                    "base64-encoded attachments) for multipart messages")
     )
     delivery_status = models.IntegerField(
         _("Delivery status"),
@@ -166,15 +145,14 @@ class Bounce(models.Model):
     """
     Email bounce data.
 
-    TODO: - make the following bounces unavailable for resending, and do not
-            resend them:
+    TODO: - add a field to indicate whether the message for this bounce was
+            later delivered, and do not resend messages for such bounces
+          - make the following bounces unavailable for resending:
             - already-been-resent bounces, because new messages are created
               upon resending
             - bounces with inactive email addresses
-          - when resending:
-            - do not use the old message ID, and instead let a new one be
-              generated
-            - mark that the bounce "has been resent"
+            - bounces whose messages were later delivered
+
     """
 
     raw_data = models.TextField(
