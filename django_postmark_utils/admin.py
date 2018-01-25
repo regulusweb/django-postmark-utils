@@ -38,7 +38,7 @@ class MessageAdmin(admin.ModelAdmin):
     )
 
 
-def resend_messages(modeladmin, request, queryset):
+def resend_bounced_messages(modeladmin, request, queryset):
 
     message_bounces = {}
     for obj in queryset:
@@ -88,13 +88,13 @@ def resend_messages(modeladmin, request, queryset):
                 msg.send()
                 bounce.has_been_resent = True
                 bounce.save()
-resend_messages.short_description = _("Resend messages for selected bounces")
+resend_bounced_messages.short_description = _("Resend messages for selected bounces")
 
 
 @admin.register(Bounce)
 class BounceAdmin(admin.ModelAdmin):
 
-    actions = [resend_messages]
+    actions = [resend_bounced_messages]
     list_display = (
         'bounce_id',
         'message_link',
