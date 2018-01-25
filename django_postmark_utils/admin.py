@@ -13,20 +13,42 @@ from .models import Bounce, Delivery, Message
 from .utils import ResendEmailMessage
 
 
+def resend_unsent_messages(modeladmin, request, queryset):
+
+    for message in queryset:
+        # Recreate the message
+        msg = pickle.loads(message.pickled_obj)
+
+        msg['Date'] = formatdate(localtime=settings.EMAIL_USE_LOCALTIME)
+        msg['Message-ID'] = make_msgid(domain=DNS_NAME)
+
+        if message.has_been_resent:
+            # TODO: log this, or display message to user
+            pass
+        else:
+            msg.send()
+            message.has_been_resent = True
+            message.save()
+resend_unsent_messages.short_description = _("Resend unsent messages")
+
+
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
 
+    actions = [resend_unsent_messages]
     list_display = (
         'message_id',
         'date',
         'subject',
         'to_emails',
         'delivery_status',
+        'has_been_resent',
         'delivery_message_id',
         'delivery_error_code',
     )
     list_filter = (
         'delivery_status',
+        'has_been_resent',
         'delivery_error_code',
     )
     search_fields = (

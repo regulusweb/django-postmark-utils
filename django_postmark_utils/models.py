@@ -5,6 +5,10 @@ from django.utils.translation import ugettext_lazy as _
 class Message(models.Model):
     """
     Email message data.
+
+    TODO: - make the following messages unavailable for resending:
+            - already-been-resent messages, because new messages are created
+              upon resending
     """
 
     DELIVERY_STATUS_OPTIONS = {
@@ -61,6 +65,12 @@ class Message(models.Model):
     delivery_status = models.IntegerField(
         _("Delivery status"),
         help_text=_("The delivery status of the message"),
+    )
+    has_been_resent = models.BooleanField(
+        _("Has been resent"),
+        default=False,
+        help_text=_("If the message has been resent, after an exception "
+                    "prevented this from happening the first time round")
     )
     delivery_submission_date = models.DateTimeField(
         _("Delivery-submission date"),

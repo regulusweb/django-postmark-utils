@@ -37,6 +37,7 @@ def store_message(message, response, delivery_status):
         cc_emails=header_cc,
         bcc_emails=header_bcc,
         delivery_status=delivery_status,
+        has_been_resent=False,
         delivery_submission_date=response_submitted_at,
         delivery_message_id=response_message_id,
         delivery_error_code=response_error_code,
