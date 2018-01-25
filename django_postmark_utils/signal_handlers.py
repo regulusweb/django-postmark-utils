@@ -3,7 +3,7 @@ import pickle
 from dateutil import parser
 from django.dispatch import receiver
 from postmarker.django.backend import EmailBackend
-from postmarker.django.signals import post_send
+from postmarker.django.signals import on_exception, post_send
 
 from .models import Message
 
@@ -22,10 +22,10 @@ def store_message(message, response, delivery_status):
     header_cc = header_data.get('Cc', "")
     header_bcc = header_data.get('Bcc', "")
 
-    response_submitted_at = response['SubmittedAt']
-    response_message_id = response['MessageID']
-    response_error_code = response['ErrorCode']
-    response_message = response['Message']
+    response_submitted_at = response.get('SubmittedAt', None)
+    response_message_id = response.get('MessageID', '')
+    response_error_code = response.get('ErrorCode', None)
+    response_message = response.get('Message', '')
 
     Message.objects.create(
         pickled_obj=pickled_obj,
@@ -58,3 +58,29 @@ def store_messages(sender, **kwargs):
     #       "messges" matches that in the "response")
     for message, response in zip(messages, responses):
         store_message(message, response, delivery_status)
+
+
+@receiver(on_exception, sender=EmailBackend, dispatch_uid='django_postmark_utils_store_messages_on_exception')
+def store_messages_on_exception(sender, **kwargs):
+    """
+    Called in case of Postmark API errors (if the message was rejected by
+    Postmark), or any local errors, including network errors, and so on.
+
+    Stores message data in the database, or updates the delivery status of
+    already-stored messages.
+    """
+
+    raw_messages = kwargs['raw_messages']
+    exception = kwargs['exception']
+    delivery_status = Message.DELIVERY_STATUS_OPTIONS['NOT_SENT']
+
+    for raw_message in raw_messages:
+        message = raw_message.message()
+        message_id = dict(message._headers)['Message-ID']
+        try:
+            stored_message = Message.objects.get(message_id)
+        except Message.DoesNotExist:
+            store_message(message, {}, delivery_status)
+        else:
+            stored_message.delivery_status = delivery_status
+            stored_message.save()
