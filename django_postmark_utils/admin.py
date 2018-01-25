@@ -63,11 +63,11 @@ class MessageAdmin(admin.ModelAdmin):
 def resend_bounced_messages(modeladmin, request, queryset):
 
     message_bounces = {}
-    for obj in queryset:
-        message = obj.message
+    for bounce in queryset:
+        message = bounce.message
         if message not in message_bounces:
             message_bounces[message] = []
-        message_bounces[message].append(obj)
+        message_bounces[message].append(bounce)
     for message in message_bounces:
         # Recreate the message
         msg = pickle.loads(message.pickled_obj)
