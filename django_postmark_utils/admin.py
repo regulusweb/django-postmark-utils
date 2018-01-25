@@ -25,6 +25,7 @@ def resend_unsent_messages(modeladmin, request, queryset):
             # TODO: log this, or display message to user
             pass
         else:
+            msg = ResendEmailMessage(msg)
             msg.send()
             message.has_been_resent = True
             message.save()
