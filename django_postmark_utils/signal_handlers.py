@@ -45,10 +45,12 @@ def store_message(message, response, delivery_status):
     )
 
 
-@receiver(post_send, sender=EmailBackend, dispatch_uid='django_postmark_utils_store_messages')
-def store_messages(sender, **kwargs):
+@receiver(post_send, sender=EmailBackend, dispatch_uid='django_postmark_utils_store_messages_on_send')
+def store_messages_on_send(sender, **kwargs):
     """
-    Store message data in the database.
+    Called after messages have been sent to Postmark.
+
+    Stores message data in the database.
     """
 
     messages = kwargs['messages']
