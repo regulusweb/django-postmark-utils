@@ -140,6 +140,9 @@ class Message(models.Model):
             else:
                 # TODO: use single query instead of loop?
                 for recipient in recipients:
+                    # Assumes Postmark does not deliver (and send webhooks
+                    # for) multiple messages to email addresses specified
+                    # multiple times
                     recipient_bounces = bounces.filter(email=recipient)
                     recipient_deliveries = deliveries.filter(email=recipient)
                     if recipient_bounces and not recepient_deliveries:
