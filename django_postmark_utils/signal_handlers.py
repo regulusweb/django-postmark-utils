@@ -27,6 +27,8 @@ def store_message(message, response, delivery_status):
     response_error_code = response.get('ErrorCode', None)
     response_message = response.get('Message', '')
 
+    # TODO: check if a message with this message ID and delivery message ID
+    #       already exists
     Message.objects.create(
         pickled_obj=pickled_obj,
         message_id=header_message_id,

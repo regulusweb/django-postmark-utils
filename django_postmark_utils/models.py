@@ -161,8 +161,8 @@ class Bounce(models.Model):
     TODO: - make the following bounces unavailable for resending:
             - already-been-resent bounces, because new messages are created
               upon resending
-            - bounces with inactive email addresses
             - bounces whose messages were later delivered
+            - bounces with inactive email addresses
     """
 
     raw_data = models.TextField(
