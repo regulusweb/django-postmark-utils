@@ -145,14 +145,11 @@ class Bounce(models.Model):
     """
     Email bounce data.
 
-    TODO: - add a field to indicate whether the message for this bounce was
-            later delivered, and do not resend messages for such bounces
-          - make the following bounces unavailable for resending:
+    TODO: - make the following bounces unavailable for resending:
             - already-been-resent bounces, because new messages are created
               upon resending
             - bounces with inactive email addresses
             - bounces whose messages were later delivered
-
     """
 
     raw_data = models.TextField(
@@ -197,6 +194,12 @@ class Bounce(models.Model):
         default=False,
         help_text=_("If the message has been resent, in response to the bounce")
     )
+    has_been_delivered = models.BooleanField(
+        _("Has been delivered"),
+        default=False,
+        help_text=_("If the message has been delivered, after the bounce "
+                    "happened")
+    )
 
     class Meta:
         verbose_name = _("bounce")
@@ -234,3 +237,20 @@ class Delivery(models.Model):
         verbose_name_plural = _("deliveries")
         unique_together = ('message', 'email')
         ordering = ['-date']
+
+    def update_bounce_has_been_delivered(self):
+        """
+        Updates the flag indicating a bounce has been delivered, upon a
+        delivery.
+
+        TODO: - do email addresses appearing in multiple recepient fields (or
+                even multiple times in the same field) get delivered to the
+                addresses multiple times?
+              - do bounce and delivery email addresses have names in them, if
+                they were specified that way when sending, or do they get
+                changed in any way from what was in the sending header?
+        """
+
+        # Assumes Postmark does not deliver (and send webhooks for) multiple
+        # messages to email addresses specified multiple times
+        self.message.bounces.filter(email=self.email).update(has_been_delivered=True)

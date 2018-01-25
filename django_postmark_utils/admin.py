@@ -72,11 +72,14 @@ def resend_messages(modeladmin, request, queryset):
             if bounce.has_been_resent:
                 # TODO: log this, or display message to user
                 pass
+            if bounce.has_been_delivered:
+                # TODO: log this, or display message to user
+                pass
             if bounce.is_inactive:
                 # TODO: log this, or display message to user, mentioning
                 #       whether the email address can be reactivated
                 pass
-            if (not bounce.has_been_resent) and (not bounce.is_inactive):
+            if (not bounce.has_been_resent) and (not bounce.has_been_delivered) and (not bounce.is_inactive):
                 bounce.has_been_resent = True
                 msg['To'] = bounce.email
                 del msg['Cc']
@@ -101,6 +104,7 @@ class BounceAdmin(admin.ModelAdmin):
         'is_inactive',
         'can_activate',
         'has_been_resent',
+        'has_been_delivered',
     )
     list_filter = (
         'message__delivery_status',
@@ -108,6 +112,7 @@ class BounceAdmin(admin.ModelAdmin):
         'is_inactive',
         'can_activate',
         'has_been_resent',
+        'has_been_delivered',
     )
     search_fields = (
         'message__message_id',

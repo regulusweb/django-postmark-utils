@@ -71,6 +71,7 @@ class BounceReceiver(View):
                     is_inactive=inactive,
                     can_activate=can_activate,
                     has_been_resent=False,
+                    has_been_delivered=False,
                 )
                 message.update_delivery_status()
             else:
@@ -117,13 +118,14 @@ class DeliveryReceiver(View):
             try:
                 delivery = Delivery.objects.get(message=message, email=recipient)
             except Delivery.DoesNotExist:
-                Delivery.objects.create(
+                delivery = Delivery.objects.create(
                     raw_data=delivery_data_json,
                     message=message,
                     email=recipient,
                     date=delivered_at,
                 )
                 message.update_delivery_status()
+                delivery.update_bounce_has_been_delivered()
             else:
                 # TODO: log as duplicate
                 pass
