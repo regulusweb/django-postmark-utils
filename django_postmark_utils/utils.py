@@ -13,19 +13,19 @@ class ResendEmailMessage(EmailMessage):
     individual email fields, and using methods such as "attach".
     """
 
-    def __init__(self, message, connection=None):
-        self._message = message
+    def __init__(self, msg, connection=None):
+        self._msg = msg
         super().__init__(subject='', body='', from_email=None, to=None,
                          bcc=None, connection=connection, attachments=None,
                          headers=None, cc=None, reply_to=None)
 
     def recipients(self):
-        header = dict(self._message._headers)
+        header = dict(self._msg._headers)
         return [email for email in (header.get('To', '') +
                                     header.get('Cc', '') +
                                     header.get('Bcc', '')) if email]
 
     def message(self):
-        self._message['Date'] = formatdate(localtime=settings.EMAIL_USE_LOCALTIME)
-        self._message['Message-ID'] = make_msgid(domain=DNS_NAME)
-        return self._message
+        self._msg['Date'] = formatdate(localtime=settings.EMAIL_USE_LOCALTIME)
+        self._msg['Message-ID'] = make_msgid(domain=DNS_NAME)
+        return self._msg

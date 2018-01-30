@@ -1,12 +1,17 @@
 import json
+import logging
 
 from dateutil import parser
-from django.http import JsonResponse
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
-from .models import Bounce, Delivery, Message
+from .models import Bounce, Delivery, Email
+
+
+logger = logging.getLogger(__name__)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -41,11 +46,10 @@ class BounceReceiver(View):
         }
         """
 
-        bounce_data_json = request.body.decode('utf-8')
-        bounce_data = json.loads(bounce_data_json)
+        bounce_data = json.loads(request.body.decode('utf-8'))
         bounce_id = bounce_data['ID']
-        message_id = bounce_data['MessageID']
-        email = bounce_data['Email']
+        msg_id = bounce_data['MessageID']
+        email_address = bounce_data['Email']
         bounced_at_string = bounce_data['BouncedAt']
         bounced_at = parser.parse(bounced_at_string)
         type_code = bounce_data['TypeCode']
@@ -53,32 +57,26 @@ class BounceReceiver(View):
         can_activate = bounce_data['CanActivate']
 
         try:
-            message = Message.objects.get(delivery_message_id=message_id)
-        except Message.DoesNotExist:
-            # TODO: log the error
-            pass
+            email = Email.objects.get(delivery_msg_id=msg_id)
+        except Email.DoesNotExist:
+            logger.error(_("Email not found for bounce notification:\n"
+                           "%(bounce_data)s") % {
+                                'bounce_data': bounce_data,
+                            })
         else:
-            try:
-                bounce = Bounce.objects.get(bounce_id=bounce_id)
-            except Bounce.DoesNotExist:
-                Bounce.objects.create(
-                    raw_data=bounce_data_json,
-                    message=message,
-                    bounce_id=bounce_id,
-                    email=email,
-                    date=bounced_at,
-                    type_code=type_code,
-                    is_inactive=inactive,
-                    can_activate=can_activate,
-                    has_been_resent=False,
-                    has_been_delivered=False,
-                )
-                message.update_delivery_status()
-            else:
-                # TODO: log as duplicate
-                pass
+            Bounce.objects.get_or_create(
+                bounce_id=bounce_id,
+                defaults={
+                    'email': email,
+                    'email_address': email_address,
+                    'date': bounced_at,
+                    'type_code': type_code,
+                    'is_inactive': inactive,
+                    'can_activate': can_activate,
+                },
+            )
 
-        return JsonResponse({})
+        return HttpResponse(status=204)
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -102,32 +100,26 @@ class DeliveryReceiver(View):
         }
         """
 
-        delivery_data_json = request.body.decode('utf-8')
-        delivery_data = json.loads(delivery_data_json)
-        message_id = delivery_data['MessageID']
+        delivery_data = json.loads(request.body.decode('utf-8'))
+        msg_id = delivery_data['MessageID']
         recipient = delivery_data['Recipient']
         delivered_at_string = delivery_data['DeliveredAt']
         delivered_at = parser.parse(delivered_at_string)
 
         try:
-            message = Message.objects.get(delivery_message_id=message_id)
-        except Message.DoesNotExist:
-            # TODO: log the error
-            pass
+            email = Email.objects.get(delivery_msg_id=msg_id)
+        except Email.DoesNotExist:
+            logger.error(_("Email not found for delivery notification:\n"
+                           "%(delivery_data)s") % {
+                                'delivery_data': delivery_data,
+                            })
         else:
-            try:
-                delivery = Delivery.objects.get(message=message, email=recipient)
-            except Delivery.DoesNotExist:
-                delivery = Delivery.objects.create(
-                    raw_data=delivery_data_json,
-                    message=message,
-                    email=recipient,
-                    date=delivered_at,
-                )
-                message.update_delivery_status()
-                delivery.update_bounce_has_been_delivered()
-            else:
-                # TODO: log as duplicate
-                pass
+            Delivery.objects.get_or_create(
+                email=email,
+                email_address=recipient,
+                defaults={
+                    'date': delivered_at,
+                },
+            )
 
-        return JsonResponse({})
+        return HttpResponse(status=204)
