@@ -5,6 +5,7 @@ from functools import wraps
 from dateutil import parser
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseForbidden
+from django.utils.crypto import constant_time_compare
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views import View
@@ -19,7 +20,7 @@ def url_secret_required(view_func,
                         correct_secret=settings.POSTMARK_UTILS_SECRET):
     @wraps(view_func)
     def _check_secret(request, secret, *args, **kwargs):
-        if secret != correct_secret:
+        if not constant_time_compare(secret, correct_secret):
             logger.error(_("Access forbidden - path: %(request_path)s") % {
                 'request_path': request.path,
             })
