@@ -21,9 +21,6 @@ def url_secret_required(view_func,
     @wraps(view_func)
     def _check_secret(request, secret, *args, **kwargs):
         if not constant_time_compare(secret, correct_secret):
-            logger.error(_("Access forbidden - path: %(request_path)s") % {
-                'request_path': request.path,
-            })
             return HttpResponseForbidden()
         else:
             return view_func(request, secret, *args, **kwargs)
