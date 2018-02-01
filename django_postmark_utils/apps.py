@@ -7,4 +7,4 @@ class DjangoPostmarkUtilsConfig(AppConfig):
     verbose_name = _("Django Postmark Utils")
 
     def ready(self):
-        from . import signal_handlers
+        from . import signal_handlers  # noqa: F401

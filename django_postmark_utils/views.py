@@ -1,8 +1,10 @@
 import json
 import logging
+from functools import wraps
 
 from dateutil import parser
-from django.http import HttpResponse
+from django.conf import settings
+from django.http import HttpResponse, HttpResponseForbidden
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views import View
@@ -10,11 +12,25 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import Bounce, Delivery, Email
 
-
 logger = logging.getLogger(__name__)
 
 
+def url_secret_required(view_func,
+                        correct_secret=settings.POSTMARK_UTILS_SECRET):
+    @wraps(view_func)
+    def _check_secret(request, secret, *args, **kwargs):
+        if secret != correct_secret:
+            logger.error(_("Access forbidden - path: %(request_path)s") % {
+                'request_path': request.path,
+            })
+            return HttpResponseForbidden()
+        else:
+            return view_func(request, secret, *args, **kwargs)
+    return _check_secret
+
+
 @method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(url_secret_required, name='dispatch')
 class BounceReceiver(View):
 
     http_method_names = ['post']
@@ -33,7 +49,8 @@ class BounceReceiver(View):
             "Tag": "Test",
             "MessageID": "883953f4-6105-42a2-a16a-77a8eac79483",
             "ServerID": 23,
-            "Description": "The server was unable to deliver your message (ex: unknown user, mailbox not found).",
+            "Description": "The server was unable to deliver your message (ex:
+                            unknown user, mailbox not found).",
             "Details": "Test bounce details",
             "Email": "john@example.com",
             "From": "sender@example.com",
@@ -48,7 +65,7 @@ class BounceReceiver(View):
 
         bounce_data = json.loads(request.body.decode('utf-8'))
         bounce_id = bounce_data['ID']
-        msg_id = bounce_data['MessageID']
+        email_id = bounce_data['MessageID']
         email_address = bounce_data['Email']
         bounced_at_string = bounce_data['BouncedAt']
         bounced_at = parser.parse(bounced_at_string)
@@ -57,7 +74,7 @@ class BounceReceiver(View):
         can_activate = bounce_data['CanActivate']
 
         try:
-            email = Email.objects.get(delivery_msg_id=msg_id)
+            email = Email.objects.get(delivery_email_id=email_id)
         except Email.DoesNotExist:
             logger.error(_("Email not found for bounce notification:\n"
                            "%(bounce_data)s") % {
@@ -80,6 +97,7 @@ class BounceReceiver(View):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
+@method_decorator(url_secret_required, name='dispatch')
 class DeliveryReceiver(View):
 
     http_method_names = ['post']
@@ -101,13 +119,13 @@ class DeliveryReceiver(View):
         """
 
         delivery_data = json.loads(request.body.decode('utf-8'))
-        msg_id = delivery_data['MessageID']
+        email_id = delivery_data['MessageID']
         recipient = delivery_data['Recipient']
         delivered_at_string = delivery_data['DeliveredAt']
         delivered_at = parser.parse(delivered_at_string)
 
         try:
-            email = Email.objects.get(delivery_msg_id=msg_id)
+            email = Email.objects.get(delivery_email_id=email_id)
         except Email.DoesNotExist:
             logger.error(_("Email not found for delivery notification:\n"
                            "%(delivery_data)s") % {

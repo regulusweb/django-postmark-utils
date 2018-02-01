@@ -3,7 +3,6 @@ from django.utils.functional import lazy
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
-
 mark_safe_lazy = lazy(mark_safe, str)
 
 
@@ -18,46 +17,13 @@ class Message(models.Model):
                     '"email.message.Message" (or a subclass) object, in '
                     'pickle format')
     )
-    resend_for_id = models.CharField(
-        _("Resend for ID"),
+    message_id = models.CharField(
+        _("Message ID"),
         max_length=255,
         unique=True,
         help_text=_("ID used internally by the app, to match an email to the "
                     "message it has been resent for, by being sent in the "
                     "email header")
-    )
-
-    class Meta:
-        verbose_name = _("message")
-        verbose_name_plural = _("messages")
-
-
-class Email(models.Model):
-    """
-    Email message metadata.
-    """
-
-    message = models.ForeignKey(
-        'Message',
-        verbose_name=_("Message"),
-        on_delete=models.CASCADE,
-        related_name='emails',
-        help_text=_("The message the email is for")
-    )
-    is_resend = models.BooleanField(
-        _("Is resend"),
-        default=False,
-        help_text=_("If the email is a resend of a previous one")
-    )
-    msg_id = models.CharField(
-        _("Message ID"),
-        max_length=255,
-        unique=True,
-        help_text=_("The 'Message-ID' header field of the email")
-    )
-    date = models.DateTimeField(
-        _("Date"),
-        help_text=_("The 'Date' header field of the email")
     )
     subject = models.CharField(
         _("Subject"),
@@ -89,6 +55,34 @@ class Email(models.Model):
         help_text=_("The 'Bcc' field of the email, with email addresses "
                     "separated by commas")
     )
+
+    class Meta:
+        verbose_name = _("message")
+        verbose_name_plural = _("messages")
+
+
+class Email(models.Model):
+    """
+    Email message metadata.
+    """
+
+    message = models.ForeignKey(
+        'Message',
+        verbose_name=_("Message"),
+        on_delete=models.CASCADE,
+        related_name='emails',
+        help_text=_("The message the email is for")
+    )
+    email_id = models.CharField(
+        _("Email ID"),
+        max_length=255,
+        unique=True,
+        help_text=_("The 'Message-ID' header field of the email")
+    )
+    date = models.DateTimeField(
+        _("Date"),
+        help_text=_("The 'Date' header field of the email")
+    )
     sending_error = models.TextField(
         _("Sending error"),
         blank=True,
@@ -101,8 +95,8 @@ class Email(models.Model):
         blank=True,
         help_text=_("When the email was submitted for delivery")
     )
-    delivery_msg_id = models.CharField(
-        _("Delivery message ID"),
+    delivery_email_id = models.CharField(
+        _("Delivery email ID"),
         max_length=255,
         unique=True,
         null=True,
@@ -115,7 +109,7 @@ class Email(models.Model):
         null=True,
         blank=True,
         help_text=mark_safe_lazy(_("The delivery error code of the email, as "
-                                   "specified <a target='_blank' href='https://postmarkapp.com/developer/api/overview#error-codes'>here</a>")),
+                                   "specified <a target='_blank' href='https://postmarkapp.com/developer/api/overview#error-codes'>here</a>")),  # noqa: E501
     )
     delivery_message = models.CharField(
         _("Delivery message"),
@@ -158,7 +152,7 @@ class Bounce(models.Model):
     type_code = models.IntegerField(
         _("Type code"),
         help_text=mark_safe_lazy(_("The type code of the bounce, as specified "
-                                   "<a target='_blank' href='https://postmarkapp.com/developer/api/bounce-api#bounce-types'>here</a>")),
+                                   "<a target='_blank' href='https://postmarkapp.com/developer/api/bounce-api#bounce-types'>here</a>")),  # noqa: E501
     )
     is_inactive = models.BooleanField(
         _("Is inactive"),
