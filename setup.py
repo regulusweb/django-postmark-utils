@@ -10,6 +10,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 setup(
     name='django-postmark-utils',
     version='0.1',
+    description='Django utilities to help track emails sent using Postmark',
     author='Regulus Ltd',
     author_email='reg@regulusweb.com',
     url='https://github.com/regulusweb/django-postmark-utils',
