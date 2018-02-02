@@ -22,7 +22,7 @@ Install the `feature/initial-draft` branch from GitHub:
 $ pip install git+https://github.com/regulusweb/django-postmark-utils.git@feature/initial-draft#egg=django-postmark-utils
 ```
 
-Django Postmark Utils makes use of the Django email backend provided by [Postmarker](https://postmarker.readthedocs.io/en/latest/>), so first configure it in your project's settings, as per the [documentation](https://postmarker.readthedocs.io/en/latest/django.html).
+Django Postmark Utils makes use of the Django email backend provided by [Postmarker](https://postmarker.readthedocs.io/en/latest/), so first configure it in your project's settings, as per the [documentation](https://postmarker.readthedocs.io/en/latest/django.html).
 
 ```python
 EMAIL_BACKEND = 'postmarker.django.EmailBackend'
