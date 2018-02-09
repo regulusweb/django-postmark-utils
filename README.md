@@ -16,10 +16,8 @@ Django utilities to help track emails sent using Postmark.
 
 ## Installation
 
-Install the `feature/initial-draft` branch from GitHub:
-
 ```
-$ pip install git+https://github.com/regulusweb/django-postmark-utils.git@feature/initial-draft#egg=django-postmark-utils
+$ pip install git+https://github.com/regulusweb/django-postmark-utils.git
 ```
 
 Django Postmark Utils makes use of the Django email backend provided by [Postmarker](https://postmarker.readthedocs.io/en/latest/), so first configure it in your project's settings, as per the [documentation](https://postmarker.readthedocs.io/en/latest/django.html).
@@ -74,6 +72,6 @@ MESSAGE_ID_HEADER_FIELD_NAME = '<YOUR CUSTOM EMAIL HEADER FIELD NAME>'
 
 ## Usage
 
-Emails (including failed attempts) sent via the Postmarker email backend will be stored in the database, and can be viewed in the admin site.
+Emails (including failed attempts) sent via the Postmarker email backend will be stored in the database, and can be viewed in the admin.
 
 In the email change page, clicking on the `Go to resend list` link next to the `Resend` field will send you to a list from where you can use the `Resend emails` admin action to resend the email.
