@@ -55,6 +55,7 @@ class Message(models.Model):
         help_text=_("The 'Bcc' field of the email, with email addresses "
                     "separated by commas")
     )
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = _("message")
