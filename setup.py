@@ -7,6 +7,12 @@ from setuptools import find_packages, setup
 # allow setup.py to be run from any path
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
+test_requires = [
+    'pytest==3.6.3',
+    'pytest-django==3.3.2',
+    'pytest-xdist==1.22.2',
+]
+
 setup(
     name='django-postmark-utils',
     version='0.1',
@@ -21,6 +27,9 @@ setup(
         'postmarker>=0.11.3',
         'python-dateutil>=2.0',
     ],
+    extras_require={
+        'test': test_requires,
+    },
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
