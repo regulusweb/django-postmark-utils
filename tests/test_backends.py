@@ -2,6 +2,8 @@ import pytest
 
 from django.core import mail
 
+from postmarker.exceptions import PostmarkerException
+
 
 @pytest.fixture
 def email_backend(settings):
@@ -18,7 +20,7 @@ def postmark_response(postmark_request):
     """
     Mocks an error response from a Postmark API call via Postmarker.
     """
-    postmark_request.return_value.json.side_effect = ValueError
+    postmark_request.return_value.json.side_effect = PostmarkerException
 
 
 def send_with_connection(connection):
